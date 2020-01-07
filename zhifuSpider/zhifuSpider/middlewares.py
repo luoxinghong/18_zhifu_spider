@@ -94,29 +94,27 @@ class UrlFilterAndAdd(object):
         return added
 
 
-from .utils import fetch_one_proxy
+from .utils import get_one_proxy
 username = "767166726"
 password = "lnawbqlr"
-proxy = fetch_one_proxy()  # 获取一个代理
-logger = logging.getLogger(__name__)
-THRESHOLD = 3  # 换ip阈值
-fail_time = 0  # 此ip异常次数
-# 代理中间件
-class ProxyMiddleware(object):
+# proxy = get_one_proxy()  # 获取一个代理
+# logger = logging.getLogger(__name__)
+# THRESHOLD = 3  # 换ip阈值
+# fail_time = 0  # 此ip异常次数
+# # 代理中间件
+class ProxyDownloadMiddleware(object):
+
     def process_request(self, request, spider):
-        proxy_url = 'http://%s:%s@%s' % (username, password, proxy)
-        request.meta['proxy'] = proxy_url
-        logger.debug("using proxy: {}".format(request.meta['proxy']))
-        logger.debug("fail_time: {}".format(fail_time))
-        auth = "Basic %s" % (base64.b64encode(('%s:%s' % (username, password)).encode('utf-8'))).decode('utf-8')
-        request.headers['Proxy-Authorization'] = auth
+        if request.url.startswith("http://"):
+            request.meta['proxy'] = "http://{proxy_ip}".format(proxy_ip=get_one_proxy())
+        elif request.url.startswith("https://"):
+            request.meta['proxy'] = "https://{proxy_ip}".format(proxy_ip=get_one_proxy())
 
-
-    def process_response(self, request, response, spider):
-        global fail_time, proxy, THRESHOLD
-        if not(200 <= response.status < 300):
-            fail_time += 1
-            if fail_time >= THRESHOLD:
-                proxy = fetch_one_proxy()
-                fail_time = 0
-        return response
+        logging.debug("using proxy: {}".format(request.meta['proxy']))
+        # 使用私密代理或独享代理需要将用户名和密码进行base64编码，然后赋值给request.headers["Proxy-Authorization"]
+        #
+        # 如果是开放代理就不需要以下步骤，直接设置代理IP即可
+        user_password = "{username}:{password}".format(username=username, password=password)
+        b64_user_password = base64.b64encode(user_password.encode("utf-8"))
+        request.headers["Proxy-Authorization"] = "Basic " + b64_user_password.decode("utf-8")
+        return None

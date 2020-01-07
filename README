@@ -1,25 +1,30 @@
+0回复也需要爬取  目前还没发现0回复的question
 
-两个关于知乎的爬虫，一个基于关键词搜索，爬取所有搜索的问题以及问题对应的答案和答案的所有评论；另外一个基于第一个爬虫获取的user_seeds,爬取用户相关信息
-一）：关于项目环境 python3.x ubuntu 16.04 scrapy 1.5 安装适合以上环境的ｍｙｓｑｌ（网上一搜一大堆） 项目中使用的其余包，安装满足以上环境的最新版本即可，由于在项目开发开始之前没有使用ａｎａｃｏｎｄａ的虚拟环境，导致项目完成后在生成环境txt文件的时候会将base env中 的所有包全部写进requirement中。（ｐｓ:这也是以后需要注意的） 
-二）：项目配置 在完成第一步所有所需环境的安装之后,进行mysql的配置。创建自己的数据库，在setting文件中配置ｍｙｓｑｌ的相关参数。 在数据库中创建表，表设计如下：
-	ans_comment
-	answer_table
-	ask_table
-	author_info
-	author_seeds
-	key_words_table
-	question_table
-	reply_table
-	每个表具体字段见：项目item.py文件中，其中key_words_table（必填）是需要在其中加入的检索的关键词，爬虫以此为种子开始爬取。
-配置好以上环境，就可以运行了！
+专栏  api接口返回无专栏信息  全为question
 
-关于该爬虫的说明：
-	基于scrapy框架，使用ＭｙＳＱＬ存储数据，管理种子。
+楼中楼有，但是之间没有关系（未实现）
+
+知乎输入关键字，搜索相关question的信息
 
 
-项目还是雏形，很多功能尚未实现，需要各位有兴趣的码友共同改进。
-１．知乎登录频繁改版，项目中的login.py已近废掉，所以采取了最为粗暴的方式，直接从浏览器中拿相关参数（有解决办法的可以提交改进～～～）
-２．使用ｒｅｄｉｓ实现分布式
+
+truncate table comment;
+truncate table answer;
+truncate table question;
+
+select count(*) from question;
+select count(*) from answer;
+select count(*) from comment;
 
 
-我的扣扣：１３９８１４１５８０有问题的朋友可以联系或者ｉｓｓｕｅ
+update `question` set `q_alias_name`=replace(`q_alias_name`,' ','');
+
+
+tar -zcvf comment.tar.gz comment.csv
+
+select id,q_id,q_full_name,q_alias_name,IFNULL(q_title,''),IFNULL(q_detail,''),IFNULL(q_create_time,''),IFNULL(q_attention_num,''),IFNULL(answer_num,''),IFNULL(q_scanner_num,''),IFNULL(best_answer_id,''),q_url,IFNULL(tags,'') from question limit 10000 into outfile '/var/lib/mysql-files/question.csv' fields terminated by ',' optionally enclosed by '"' escaped by '"' lines terminated by '\r\n';
+
+
+select id,q_id,answer_id,IFNULL(answer_detail,''),create_time,IFNULL(agree_num,''),IFNULL(comment_num,''),IFNULL(href_num,'') from answer limit 100000 into outfile '/var/lib/mysql-files/answer.csv' fields terminated by ',' optionally enclosed by '"' escaped by '"' lines terminated by '\r\n';
+
+select id,answer_id,IFNULL(comment_detail,''),IFNULL(vote_count,'') from comment limit 500000 into outfile '/var/lib/mysql-files/comment.csv' fields terminated by ',' optionally enclosed by '"' escaped by '"' lines terminated by '\r\n';

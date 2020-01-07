@@ -11,21 +11,20 @@
  Target Server Version : 50719
  File Encoding         : 65001
 
- Date: 02/08/2019 10:37:50
+ Date: 02/08/2019 10:37:28
 */
 
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- ----------------------------
--- Table structure for key_words
+-- Table structure for ans_comment
 -- ----------------------------
-DROP TABLE IF EXISTS `key_words`;
-CREATE TABLE `key_words`  (
+DROP TABLE IF EXISTS `comment`;
+CREATE TABLE `comment` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `key_word` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci DEFAULT NULL,
-  `is_crawled` int(255) DEFAULT NULL,
+  `answer_id` varchar(255) COLLATE utf8mb4_bin DEFAULT NULL,
+  `comment_detail` longtext COLLATE utf8mb4_bin,
+  `vote_count` varchar(255) COLLATE utf8mb4_bin DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8 COLLATE = utf8_general_ci ROW_FORMAT = Dynamic;
-
-SET FOREIGN_KEY_CHECKS = 1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin ROW_FORMAT=DYNAMIC;

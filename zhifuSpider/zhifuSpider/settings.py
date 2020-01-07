@@ -40,12 +40,13 @@ DOWNLOAD_TIMEOUT = 60
 DOWNLOADER_MIDDLEWARES = {
     'scrapy.extensions.downloadermiddlewares.useragent.UserAgentMiddleware': None,
     'zhifuSpider.middlewares.RandomUserAgentMiddleware': 543,
-    'scrapy.contrib.downloadermiddleware.httpproxy.HttpProxyMiddleware': 110,
-    'zhifuSpider.middlewares.ProxyMiddleware': 100,
+    # 'scrapy.contrib.downloadermiddleware.httpproxy.HttpProxyMiddleware': 110,
+    # 'zhifuSpider.middlewares.ProxyDownloadMiddleware': 100,
 }
 
+DUPEFILTER_CLASS = 'zhifuSpider.middlewares.URLRedisFilter'
 
-MYSQL_HOST = '106.12.8.109'
+MYSQL_HOST = 'localhost'
 MYSQL_USER = 'root'
 MYSQL_PASSWORD = 'lxh123'
 MYSQL_DB = 'zhihu'
@@ -55,8 +56,8 @@ MYSQL_PORT = 3306
 REDIS_HOST = 'localhost'
 REDIS_PORT = 6379
 REDIS_PASSWD = "lxh123"
-REDIS_DBNAME = 9
-REDIS_KEY = "zhifu_lr"
+REDIS_DBNAME = 2
+REDIS_KEY = "zhifu_key"
 
 
 ITEM_PIPELINES = {

@@ -2,7 +2,7 @@
 import pymysql
 import logging
 import sys
-from .items import Question_Item, answer_Item, answer_comment_Item, author_seeds_Item
+from .items import Question_Item, first_answer_Item, second_answer_Item
 from .middlewares import UrlFilterAndAdd, URLRedisFilter
 
 
@@ -13,7 +13,7 @@ class ZhifuspiderPipeline(object):
         """
         self.username = settings.get('MYSQL_USER')
         self.password = settings.get('MYSQL_PASSWORD')
-        self.database = settings.get('zhihu')
+        self.database = settings.get('MYSQL_DB')
         self.host = settings.get('MYSQL_HOST')
         self.port = settings.get('MYSQL_PORT')
         self.c = settings.get('CHARSET')
@@ -44,19 +44,6 @@ class ZhifuspiderPipeline(object):
         except self.conn.Error as e:
             sys.exit('Failed to connect database.', e)
 
-        # 如果数据库不存在则创建，否则则使用
-        try:
-            self.cur.execute(
-                'CREATE DATABASE IF NOT EXISTS  zhihu;'
-            )
-        except Exception as e:
-            raise e
-            self.logger.info('The database has existed!')
-        else:
-            self.cur.execute(
-                'USE zhihu;'
-            )
-
     def close_spider(self, close_spider):
         self.cur.close()
         self.conn.close()
@@ -71,41 +58,43 @@ class ZhifuspiderPipeline(object):
         """
 
         if isinstance(item, Question_Item):
-            self.dupefilter.add_url(item['url'])
+            self.dupefilter.add_url(item['q_url'])
             try:
                 self.cur.execute(
-                    'insert into questiones(q_id,q_title,q_detail,q_create_time,' \
-                    'q_attention_num,q_scanner_num,answer_num,best_answer_id)' \
-                    'values(%s,%s,%s,%s,%s,%s,%s,%s)',
+                    'insert into question(q_id,q_title,tags,q_detail,q_create_time,' \
+                    'q_attention_num,q_scanner_num,answer_num,best_answer_id,q_url,q_full_name,q_alias_name)' \
+                    'values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',
                     (
                         item['q_id'],
                         item['q_title'],
+                        item['tags'],
                         item['q_detail'],
                         item['q_create_time'],
                         item['q_attention_num'],
                         item['q_scanner_num'],
                         item['answer_num'],
-                        item['best_answer_id'])
+                        item['best_answer_id'],
+                        item['q_url'],
+                        item['q_full_name'],
+                        item['q_alias_name'])
                 )
                 self.cur.connection.commit()
             except self.conn.Error as e:
                 self.logger.error(e)
-        elif isinstance(item, answer_Item):
+        elif isinstance(item, first_answer_Item):
             try:
                 statement = (
-                    'insert into answeres(q_id,answer_id,answer_detail,answer_img,' \
-                    'create_time,thumb_num,comment_num,author_name,href_num)' \
-                    'values(%s,%s,%s,%s,%s,%s,%s,%s,%s)')
+                    'insert into answer(q_id,answer_id,answer_detail,' \
+                    'create_time,agree_num,comment_num,href_num)' \
+                    'values(%s,%s,%s,%s,%s,%s,%s)')
                 data = (
                     item['q_id'],
                     item['answer_id'],
                     item['answer_detail'],
-                    item['answer_img'],
                     item['create_time'],
-                    item['thumb_num'],
+                    item['agree_num'],
                     item['comment_num'],
-                    item['author_name'],
-                    item['href_num']
+                    item['href_num'],
                 )
 
                 self.cur.execute(
@@ -113,14 +102,12 @@ class ZhifuspiderPipeline(object):
                     data
                 )
                 self.cur.connection.commit()
-                self.logger.info('Write a answer successfully!')
             except self.conn.Error as e:
                 self.logger.error(e)
-                self.logger.error('Faild to insert into answer.Returned:{0:s}'.format("there is an error!!"))
-        elif isinstance(item, answer_comment_Item):
+        elif isinstance(item, second_answer_Item):
             try:
                 statement = (
-                    'insert into ans_comment(answer_id,comment_detail,vote_count)values(%s,%s,%s)'
+                    'insert into comment(answer_id,comment_detail,vote_count)values(%s,%s,%s)'
                 )
                 ac_data = (
                     item['answer_id'],
@@ -129,19 +116,6 @@ class ZhifuspiderPipeline(object):
                 self.cur.execute(
                     statement,
                     ac_data
-                )
-                self.cur.connection.commit()
-            except self.conn.Error as e:
-                self.logger.error(e)
-        elif isinstance(item, author_seeds_Item):
-            try:
-                sql = 'insert into author_seeds(url_token,is_crawled)values(%s,%s)'
-                seeds_data = (
-                    item['url_token'],
-                    item['is_crawled'])
-                self.cur.execute(
-                    sql,
-                    seeds_data
                 )
                 self.cur.connection.commit()
             except self.conn.Error as e:
